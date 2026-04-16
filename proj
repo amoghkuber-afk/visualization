@@ -4,3 +4,78 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
 
+# -----------------------------
+# 1. Create Sample Dataset
+# -----------------------------
+np.random.seed(42)
+
+cities = ['Bangalore', 'Mumbai', 'Delhi', 'Chennai', 'Hyderabad']
+latitudes = [12.9716, 19.0760, 28.7041, 13.0827, 17.3850]
+longitudes = [77.5946, 72.8777, 77.1025, 80.2707, 78.4867]
+
+data = []
+
+for i, city in enumerate(cities):
+    for day in range(1, 31):
+        temp = np.random.normal(loc=30, scale=5)
+        humidity = np.random.uniform(40, 90)
+
+        data.append([city, latitudes[i], longitudes[i], day, temp, humidity])
+
+df = pd.DataFrame(data, columns=[
+    'City', 'Latitude', 'Longitude', 'Day', 'Temperature', 'Humidity'
+])
+
+# -----------------------------
+# 2. Matplotlib Visualization
+# -----------------------------
+plt.figure(figsize=(10, 5))
+
+for city in df['City'].unique():
+    subset = df[df['City'] == city]
+    plt.plot(subset['Day'], subset['Temperature'], label=city)
+
+plt.title("Temperature Trend Over 30 Days")
+plt.xlabel("Day")
+plt.ylabel("Temperature (°C)")
+plt.legend()
+plt.grid()
+
+plt.show()
+
+# -----------------------------
+# 3. Seaborn Visualization
+# -----------------------------
+plt.figure(figsize=(8, 5))
+
+sns.boxplot(x='City', y='Temperature', data=df)
+plt.title("Temperature Distribution by City")
+
+plt.show()
+
+# Correlation heatmap
+plt.figure(figsize=(6, 4))
+sns.heatmap(df[['Temperature', 'Humidity']].corr(),
+            annot=True, cmap='coolwarm')
+
+plt.title("Correlation Heatmap")
+plt.show()
+
+# -----------------------------
+# 4. Folium Map Visualization
+# -----------------------------
+# Center map around India
+m = folium.Map(location=[20.5937, 78.9629], zoom_start=5)
+
+# Add markers
+for _, row in df.groupby('City').mean(numeric_only=True).iterrows():
+    folium.Marker(
+        location=[row['Latitude'], row['Longitude']],
+        popup=f"Avg Temp: {row['Temperature']:.2f}°C",
+        tooltip="Click for details"
+    ).add_to(m)
+
+# Save map
+m.save("map.html")
+
+print("Folium map saved as map.html")
